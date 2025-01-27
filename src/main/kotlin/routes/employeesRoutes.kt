@@ -1,19 +1,17 @@
 package routes
 
-import database.AuditLogs
 import database.Employees
 import io.ktor.http.*
 import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import models.AuditLogResponse
 import models.EmployeeRequest
 import models.EmployeeResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import utils.getFactoryId
 
 fun Route.employeesRoutes() {
 
@@ -52,9 +50,7 @@ fun Route.employeesRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Invalid Role ID")
                 return@get
             }
-
-            val principal = call.principal<JWTPrincipal>()
-            val factory = principal?.payload?.getClaim("factoryId")?.asInt() ?: 0
+            val factory = call.getFactoryId()
             val employees = transaction {
                 Employees.selectAll().where((Employees.role eq role) and (Employees.factoryId eq factory)).map {
                     EmployeeResponse(

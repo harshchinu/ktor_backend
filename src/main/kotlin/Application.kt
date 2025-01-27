@@ -45,7 +45,8 @@ fun Application.module() {
             Payroll,
             AuditLogs,
             Orders,
-            Tasks
+            Tasks,
+            Roles
         )
     }
 
@@ -64,6 +65,7 @@ fun Application.module() {
             masterTaskRoutes()
             employeesRoutes()
             orderRoutes()
+            roleRoutes()
         }
     }
 }

@@ -140,7 +140,7 @@ object AuditLogs : Table("audit_logs") {
 object Employees : Table() {
     val id = integer("employee_id").autoIncrement()
     val name = varchar("name", 255)
-    val role = varchar("role", 50) // Example: "Worker", "Master"
+    val role = varchar("role", 50).references(Roles.role) // Example: "Worker", "Master"
     val contactInfo = varchar("contact_info", 255)
     val factoryId = integer("factory_id").references(Factories.id)
     override val primaryKey = PrimaryKey(id)
@@ -164,4 +164,9 @@ object Orders : Table() {
     val status = varchar("status", 50)
     val createdAt = datetime("created_at").defaultExpression(org.jetbrains.exposed.sql.javatime.CurrentDateTime)
     override val primaryKey = PrimaryKey(id)
+}
+object Roles: Table() {
+    val role= varchar("role",50)
+    val factoryId = integer("factory_id").references(Factories.id)
+    override val primaryKey= PrimaryKey(role)
 }
