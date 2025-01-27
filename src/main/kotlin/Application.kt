@@ -39,10 +39,12 @@ fun Application.module() {
             InwardRecords,
             MasterTasks,
             CutVariants, Workflows,
-            WorkflowTasks,
+            WorkflowStages,
             ProductStock,
             Payroll,
-            AuditLogs
+            AuditLogs,
+            Orders,
+            Tasks
         )
     }
 
@@ -56,5 +58,8 @@ fun Application.module() {
         rawMaterialRoutes()
         stockRoutes()
         workflowRoutes()
+        masterTaskRoutes()
+        employeesRoutes()
+        orderRoutes()
     }
 }

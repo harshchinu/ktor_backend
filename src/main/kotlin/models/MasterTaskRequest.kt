@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class MasterTaskRequest(
     val productId: Int,
     val workflowId: Int,
+    val workflowStageId: Int,
     val assignedMasterId: Int,
     val quantityAssigned: Double
 )
@@ -18,5 +19,24 @@ data class MasterTaskResponse(
     val assignedMasterId: Int,
     val quantityAssigned: Double,
     val cutDate: String,
-    val status: String
+    val status: String,
+    val workflowStageId: Int
+)
+@Serializable
+data class MasterTaskPutResponse (
+    val cutId: Int,
+    val orderId: Int,
+)
+@Serializable
+data class MasterTaskPuRequest (
+    val productId: Int,
+    val workflowId: Int,
+    val cutVariants: List<CutVariants>
+
+)
+
+@Serializable
+data class CutVariants (
+    val productVariantId: Int,
+    val quantity: Int
 )

@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ProductRequest(
     val productName: String,
-    val description: String
+    val description: String,
+    val category: String
 )
 
 @Serializable

@@ -1,23 +1,20 @@
 package routes
 
-import database.Employees
-import database.MasterTasks
-import database.Payroll
-import database.Tasks
+import constants.WorkStatus
+import database.*
+import database.CutVariants
 import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import models.*
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import utils.createPayroll
+import utils.createTask
 import utils.getFactoryId
-import java.math.BigDecimal
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 fun Route.masterTaskRoutes() {
@@ -35,7 +32,8 @@ fun Route.masterTaskRoutes() {
                         status = it[MasterTasks.status],
                         quantityAssigned = it[MasterTasks.quantityAssigned],
                         assignedMasterId = it[MasterTasks.assignedMasterId],
-                        cutDate = it[MasterTasks.cutDate].toString()
+                        cutDate = it[MasterTasks.cutDate].toString(),
+                        workflowStageId = it[MasterTasks.workflowStageId]
                     )
                 }
             }
@@ -52,9 +50,10 @@ fun Route.masterTaskRoutes() {
                     it[assignedMasterId] = payrollData.assignedMasterId
                     it[quantityAssigned] = payrollData.quantityAssigned
                     it[cutDate] = LocalDateTime.now()
-                    it[status] = "in_progress"
+                    it[workflowStageId] = payrollData.workflowStageId
+                    it[status] = WorkStatus.IN_PROGRESS.toString()
                     it[this.factoryId] = factoryId
-                }
+                } get MasterTasks.id
             }
             call.respond(HttpStatusCode.Created, mapOf("master_taskId" to payrollId))
         }
@@ -70,47 +69,85 @@ fun Route.masterTaskRoutes() {
                         status = it[MasterTasks.status],
                         quantityAssigned = it[MasterTasks.quantityAssigned],
                         assignedMasterId = it[MasterTasks.assignedMasterId],
-                        cutDate = it[MasterTasks.cutDate].toString()
+                        cutDate = it[MasterTasks.cutDate].toString(),
+                        workflowStageId = it[MasterTasks.workflowStageId]
                     )
                 }
             }
             call.respond(masterTasks)
         }
+        put("/masterTasks/{masterTaskId}/complete") {
+            val masterTaskId = call.parameters["masterTaskId"]?.toIntOrNull()
+            if (masterTaskId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("errorMessage" to "Invalid Master task ID"))
+                return@put
+            }
+            val currentTask = transaction {
+                MasterTasks
+                    .selectAll().where { MasterTasks.id eq masterTaskId } // Use select with a condition
+                    .map {
+                        MasterTaskResponse(
+                            id = it[MasterTasks.id],
+                            factoryId = it[MasterTasks.factoryId],
+                            productId = it[MasterTasks.productId],
+                            status = it[MasterTasks.status],
+                            quantityAssigned = it[MasterTasks.quantityAssigned],
+                            assignedMasterId = it[MasterTasks.assignedMasterId],
+                            cutDate = it[MasterTasks.cutDate].toString(),
+                            workflowStageId = it[MasterTasks.workflowStageId]
+                        )
+                    }
+                    .singleOrNull() // Expecting a single result, or null if no match
+            }
+
+            if (currentTask != null) {
+                if(currentTask.status == WorkStatus.COMPLETE.toString()) {
+                    call.respond(HttpStatusCode.fromValue(208), mapOf("errorMessage" to "Already marked as completed"))
+                    return@put
+                }
+            } else {
+                call.respond(HttpStatusCode.fromValue(400), mapOf("errorMessage" to "Master task not found"))
+                return@put
+            }
+            val body=call.receive<MasterTaskPuRequest>()
+            val factory = call.getFactoryId()
+            val resp : MutableList<MasterTaskPutResponse> = mutableListOf()
+            transaction {
+                for (variant in body.cutVariants){
+                    val cutVariantId=CutVariants.insert {
+                        it[factoryId] = factory
+                        it[this.masterTaskId] = masterTaskId
+                        it[variantId] = variant.productVariantId
+                        it[quantityCut] = variant.quantity
+                    } get CutVariants.id
+                    call.application.environment.log.info("Cut variant created with id: {}",cutVariantId)
+                    val orderId=Orders.insert {
+                        it[workflowId]=body.workflowId
+                        it[productId]=body.productId
+                        it[this.cutVariantId] = cutVariantId
+                        it[quantity]=variant.quantity
+                        it[status]=WorkStatus.IN_PROGRESS.toString()
+                    } get Orders.id
+                    MasterTasks.update({MasterTasks.id eq masterTaskId}) {
+                        it[status]= WorkStatus.COMPLETE.toString()
+                    }
+                    val taskId=createTask(currentTask.assignedMasterId, orderId = orderId, status = WorkStatus.COMPLETE.toString(), workflowStageId = currentTask.workflowStageId )
+                    println("->>>>>>>>>>>>>>>>>>>>>>>>>>>>>$taskId")
+                    createPayroll(
+                        factoryId = factory,
+                        employeeId = currentTask.assignedMasterId,
+                        quantityCompleted = variant.quantity,
+                        taskId = taskId,
+                        workflowStageId = currentTask.workflowStageId
+                    )
+
+
+                    call.application.environment.log.info("order Created with id: {}",orderId)
+                    resp.add(MasterTaskPutResponse(cutVariantId,orderId))
+                }
+            }
+            call.respond(resp)
     }
 
-
-   /* // Update Task Status
-    put("/masterTasks/{mastertaskId}/complete") {
-        val taskId = call.parameters["mastertaskId"]?.toIntOrNull()
-        if (taskId == null) {
-            call.respond(HttpStatusCode.BadRequest, "Invalid task ID")
-            return@put
-        }
-
-        transaction {
-            Tasks.update({ Tasks.id eq taskId }) {
-                it[status] = newStatus
-            }
-        }
-
-        // If status is Completed, create orders
-        if (newStatus == "Completed") {
-            val task = transaction {
-                Tasks.selectAll().where { Tasks.id eq taskId }.single()
-            }
-            val orderId = transaction {
-                Orders.insert {
-                    it[workflowId] = task[Tasks.workflowId]
-                    it[productId] = task[Tasks.productId]
-                    it[cutVariantId] = task[Tasks.cutVariantId]
-                    it[quantity] = task[Tasks.quantity]
-                    it[status] = "Task Completed"
-                    it[createdAt] = System.currentTimeMillis()
-                }[Orders.id]
-            }
-            call.respond(HttpStatusCode.OK, mapOf("message" to "Task marked as completed", "order_id" to orderId))
-        } else {
-            call.respond(HttpStatusCode.OK, "Task status updated")
-        }
-    }*/
+    }
 }

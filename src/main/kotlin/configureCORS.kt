@@ -7,7 +7,7 @@ fun Application.configureCORS() {
 
     install(CORS) {
         // Allow specific origins (replace with your frontend origin)
-        allowHost("localhost:3000", schemes = listOf("http", "https"))
+        allowHost("*", schemes = listOf("http", "https"))
         allowHost("example.com", schemes = listOf("https"))
 
         // Allow specific HTTP methods
