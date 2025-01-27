@@ -52,7 +52,7 @@ fun Route.employeesRoutes() {
             }
             val factory = call.getFactoryId()
             val employees = transaction {
-                Employees.selectAll().where((Employees.role eq role) and (Employees.factoryId eq factory)).map {
+                Employees.selectAll().where((Employees.role.upperCase() eq role.uppercase()) and (Employees.factoryId eq factory)).map {
                     EmployeeResponse(
                         it[Employees.id],
                         it[Employees.name],
