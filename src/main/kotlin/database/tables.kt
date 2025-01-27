@@ -53,6 +53,7 @@ object ProductVariants : Table("product_variants") {
     val id = integer("id").autoIncrement()
     val productId = integer("product_id").references(Products.id)
     val variantName = varchar("variant_name", 50)
+    //remove skucode and proce from here
     val skuCode = varchar("sku_code", 100).uniqueIndex()
     val price = decimal("price", 10, 2)
     override val primaryKey = PrimaryKey(id)

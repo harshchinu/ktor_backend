@@ -11,6 +11,7 @@ import models.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import utils.getFactoryId
 import java.math.BigDecimal
 
 fun Route.workflowRoutes() {
@@ -19,12 +20,13 @@ fun Route.workflowRoutes() {
 
     // Create Workflow
     post("/workflows") {
+        val factoryId = call.getFactoryId()
         val workflowData = call.receive<WorkflowRequest>()
         val workflowId = transaction {
             Workflows.insert {
-                it[factoryId] = workflowData.factoryId
+                it[this.factoryId] =factoryId
                 it[workflowName] = workflowData.workflowName
-                it[description] = workflowData.description
+                it[description] = workflowData.description ?: ""
             } get Workflows.id
         }
         call.respond(HttpStatusCode.Created, mapOf("workflow_id" to workflowId))
@@ -40,7 +42,7 @@ fun Route.workflowRoutes() {
 
         val workflow = transaction {
             Workflows.selectAll().where { Workflows.id eq id }
-                .map { WorkflowResponse(it[Workflows.id], it[Workflows.factoryId], it[Workflows.workflowName], it[Workflows.description]) }
+                .map { WorkflowResponse(it[Workflows.id], it[Workflows.workflowName], it[Workflows.description]) }
                 .singleOrNull()
         }
 
@@ -50,16 +52,14 @@ fun Route.workflowRoutes() {
             call.respond(workflow)
         }
     }
-
-    authenticate {
         // Get All Workflows
         get("/workflows") {
+            val factoryId = call.getFactoryId()
             val workflows = transaction {
-                Workflows.selectAll()
+                Workflows.selectAll().where { Workflows.factoryId eq factoryId }
                     .map {
                         WorkflowResponse(
                             it[Workflows.id],
-                            it[Workflows.factoryId],
                             it[Workflows.workflowName],
                             it[Workflows.description]
                         )
@@ -68,9 +68,11 @@ fun Route.workflowRoutes() {
             call.respond(workflows)
         }
 
-    }
+
+
     // Update Workflow
     put("/workflows/{id}") {
+        val factoryId = call.getFactoryId()
         val id = call.parameters["id"]?.toIntOrNull()
         if (id == null) {
             call.respond(HttpStatusCode.BadRequest, "Invalid workflow ID")
@@ -80,9 +82,8 @@ fun Route.workflowRoutes() {
         val workflowData = call.receive<WorkflowRequest>()
         val rowsUpdated = transaction {
             Workflows.update({ Workflows.id eq id }) {
-                it[factoryId] = workflowData.factoryId
                 it[workflowName] = workflowData.workflowName
-                it[description] = workflowData.description
+                it[description] = workflowData.description?:""
             }
         }
 

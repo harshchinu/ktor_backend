@@ -65,10 +65,7 @@ fun Route.stockRoutes() {
                 .map {
                     RawMaterialResponse(
                         it[RawMaterials.id],
-                        it[RawMaterials.factoryId],
                         it[RawMaterials.materialName],
-                        it[RawMaterials.description],
-                        it[RawMaterials.unitOfMeasurement],
                         it[RawMaterials.currentStock]
                     )
                 }

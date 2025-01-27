@@ -21,8 +21,6 @@ import java.math.BigDecimal
 fun Route.productRoutes() {
 
     // Product Routes
-
-
     authenticate {
         // Create Product
         post("/products") {

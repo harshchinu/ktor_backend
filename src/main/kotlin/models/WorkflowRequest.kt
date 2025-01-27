@@ -4,15 +4,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class WorkflowRequest(
-    val factoryId: Int,
     val workflowName: String,
-    val description: String
+    val description: String? = null
 )
 
 @Serializable
 data class WorkflowResponse(
     val id: Int,
-    val factoryId: Int,
     val workflowName: String,
     val description: String
 )

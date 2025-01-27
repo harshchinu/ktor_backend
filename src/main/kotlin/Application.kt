@@ -1,6 +1,7 @@
 import database.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -49,17 +50,20 @@ fun Application.module() {
     }
 
     routing {
-        factoryRoutes()
         userRoutes()
-        auditLogRoutes()
-        manufacturerRoutes()
-        payrollRoutes()
-        productRoutes()
-        rawMaterialRoutes()
-        stockRoutes()
-        workflowRoutes()
-        masterTaskRoutes()
-        employeesRoutes()
-        orderRoutes()
+
+        factoryRoutes()
+        authenticate {
+            auditLogRoutes()
+            manufacturerRoutes()
+            payrollRoutes()
+            productRoutes()
+            rawMaterialRoutes()
+            stockRoutes()
+            workflowRoutes()
+            masterTaskRoutes()
+            employeesRoutes()
+            orderRoutes()
+        }
     }
 }

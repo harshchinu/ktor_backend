@@ -18,7 +18,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 fun Route.employeesRoutes() {
 
     authenticate {
-
         post("/employees") {
             val employeeRequest = call.receive<EmployeeRequest>()
             val employeeId = transaction {

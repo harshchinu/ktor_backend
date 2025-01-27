@@ -1,22 +1,19 @@
 package models
 
 import kotlinx.serialization.Serializable
+import java.nio.DoubleBuffer
 
 @Serializable
 data class RawMaterialRequest(
-    val factoryId: Int,
-    val materialName: String,
-    val description: String,
-    val unitOfMeasurement: String
+    val id: Int?= null,
+    val materialName: String?=null,
+    val stock: Double
 )
 
 @Serializable
 data class RawMaterialResponse(
     val id: Int,
-    val factoryId: Int,
     val materialName: String,
-    val description: String,
-    val unitOfMeasurement: String,
     val currentStock: Double
 )
 
