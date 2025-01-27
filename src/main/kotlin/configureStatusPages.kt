@@ -25,9 +25,11 @@ fun Application.configureStatusPages() {
 
         // Handle bad requests
         exception<IllegalArgumentException> { call, cause ->
+            var message="Invalid request"
+            if(cause.message != null) message= cause.message.toString()
             call.respond(
                 HttpStatusCode.BadRequest,
-                mapOf("error" to "Invalid request.")
+                mapOf("error" to message)
             )
         }
 

@@ -1,12 +1,6 @@
 package routes
 
-import database.Factories
-
 import database.Payroll
-import database.Payroll.autoIncrement
-import database.Payroll.references
-import database.Users
-import database.WorkflowTasks
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -16,7 +10,6 @@ import models.PayrollResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.math.BigDecimal
-import java.time.LocalDate
 
 fun Route.payrollRoutes() {
 
@@ -28,7 +21,7 @@ fun Route.payrollRoutes() {
             Payroll.insert {
                 it[workerId] = payrollData.workerId
                 it[taskId] = payrollData.taskId
-                it[quantityCompleted] = payrollData.quantityCompleted
+                it[this.quantityCompleted] = payrollData.quantityCompleted
                 it[totalPay] = BigDecimal.valueOf(payrollData.totalPay)
                 it[factoryId] = factoryId
             } get Payroll.id

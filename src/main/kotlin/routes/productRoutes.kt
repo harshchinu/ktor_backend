@@ -36,7 +36,7 @@ fun Route.productRoutes() {
                     it[factoryId] = factory
                     it[productName] = productData.productName
                     it[description] = productData.description
-                    it[category] = ""
+                    it[category] = productData.category
                 } get Products.id
             }
             call.respond(HttpStatusCode.Created, mapOf("product_id" to productId))
@@ -111,7 +111,7 @@ fun Route.productRoutes() {
                     it[factoryId] = factory
                     it[productName] = productData.productName
                     it[description] = productData.description
-                    it[category] = ""
+                    it[category] = productData.category
                 }
             }
 

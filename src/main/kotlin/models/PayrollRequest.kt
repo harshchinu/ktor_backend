@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class PayrollRequest(
     val workerId: Int,
     val taskId: Int,
-    val quantityCompleted: Double,
+    val quantityCompleted: Int,
     val totalPay: Double,
     val factoryId: Int
 )
@@ -16,7 +16,7 @@ data class PayrollResponse(
     val id: Int,
     val workerId: Int,
     val taskId: Int,
-    val quantityCompleted: Double,
+    val quantityCompleted: Int,
     val totalPay: Double,
     val factoryId: Int
 )

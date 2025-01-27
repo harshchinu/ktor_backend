@@ -73,6 +73,7 @@ object MasterTasks : Table("master_tasks") {
     val factoryId = integer("factory_id").references(Factories.id)
     val productId = integer("product_id").references(Products.id)
     val assignedMasterId = integer("assigned_master_id").references(Employees.id)
+    val workflowStageId= integer("workflowStageId").references(WorkflowStages.id)
     val quantityAssigned = double("quantity_assigned")
     val cutDate = datetime("cut_date")
     val status = varchar("status", 50)
@@ -84,7 +85,7 @@ object CutVariants : Table("cut_variants") {
     val factoryId = integer("factory_id").references(Factories.id)
     val masterTaskId = integer("master_task_id").references(MasterTasks.id)
     val variantId = integer("variant_id").references(ProductVariants.id)
-    val quantityCut = double("quantity_cut")
+    val quantityCut = integer("quantity_cut")
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -96,7 +97,7 @@ object Workflows : Table("workflows") {
     override val primaryKey = PrimaryKey(id)
 }
 
-object WorkflowTasks : Table("workflow_tasks") {
+object WorkflowStages : Table("workflow_stage") {
     val id = integer("id").autoIncrement()
     val factoryId = integer("factory_id").references(Factories.id)
     val workflowId = integer("workflow_id").references(Workflows.id)
@@ -117,8 +118,8 @@ object Payroll : Table("payroll") {
     val id = integer("id").autoIncrement()
     val factoryId = integer("factory_id").references(Factories.id)
     val workerId = integer("worker_id").references(Employees.id)
-    val taskId = integer("task_id").references(WorkflowTasks.id)
-    val quantityCompleted = double("quantity_completed")
+    val taskId = integer("task_id").references(Tasks.id)
+    val quantityCompleted = integer("quantity_completed")
     val totalPay = decimal("total_pay", 10, 2)
     val dateReceived = datetime("date_received")
     override val primaryKey = PrimaryKey(id)
@@ -149,6 +150,7 @@ object Tasks : Table() {
     val employeeId = integer("employee_id").references(Employees.id)
     val status = varchar("status", 50)
     val orderId = integer("order_id").references(Orders.id)
+    val workflowStageId= integer("work_flow_stage_id").references(WorkflowStages.id)
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -159,6 +161,6 @@ object Orders : Table() {
     val cutVariantId = integer("cut_variant_id").references(CutVariants.id)
     val quantity = integer("quantity")
     val status = varchar("status", 50)
-    val createdAt = datetime("created_at")
+    val createdAt = datetime("created_at").defaultExpression(org.jetbrains.exposed.sql.javatime.CurrentDateTime)
     override val primaryKey = PrimaryKey(id)
 }

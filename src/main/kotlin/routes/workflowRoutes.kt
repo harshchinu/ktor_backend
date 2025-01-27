@@ -1,6 +1,6 @@
 package routes
 
-import database.WorkflowTasks
+import database.WorkflowStages
 import database.Workflows
 import io.ktor.http.*
 import io.ktor.server.auth.*
@@ -124,11 +124,13 @@ fun Route.workflowRoutes() {
 
         val taskData = call.receive<WorkflowTaskRequest>()
         val taskId = transaction {
-            WorkflowTasks.insert {
-                it[WorkflowTasks.workflowId] = workflowId
+            val factoryId=Workflows.select(Workflows.factoryId).where(Workflows.id eq workflowId).single()[Workflows.factoryId]
+            WorkflowStages.insert {
+                it[this.factoryId]= factoryId
+                it[this.workflowId] = workflowId
                 it[taskName] = taskData.taskName
                 it[payRatePerUnit] = BigDecimal.valueOf(taskData.payRatePerUnit)
-            } get(WorkflowTasks.id)
+            } get(WorkflowStages.id)
         }
         call.respond(HttpStatusCode.Created, mapOf("task_id" to taskId))
     }
@@ -142,8 +144,8 @@ fun Route.workflowRoutes() {
         }
 
         val tasks = transaction {
-            WorkflowTasks.selectAll().where { WorkflowTasks.workflowId eq workflowId }
-                .map { WorkflowTaskResponse(it[WorkflowTasks.id], it[WorkflowTasks.workflowId], it[WorkflowTasks.taskName], it[WorkflowTasks.payRatePerUnit].toDouble()) }
+            WorkflowStages.selectAll().where { WorkflowStages.workflowId eq workflowId }
+                .map { WorkflowTaskResponse(it[WorkflowStages.id], it[WorkflowStages.workflowId], it[WorkflowStages.taskName], it[WorkflowStages.payRatePerUnit].toDouble()) }
         }
         call.respond(tasks)
     }
